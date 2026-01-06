@@ -1,0 +1,22 @@
+services:
+  sportsbet:
+    build: .
+    container_name: sportsbet
+    restart: unless-stopped
+    ports:
+      - "8083:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - JWT_SECRET=${JWT_SECRET}
+      - ODDS_API_KEY=${ODDS_API_KEY}
+      - BALLDONTLIE_API_KEY=${BALLDONTLIE_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    volumes:
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
