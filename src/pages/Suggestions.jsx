@@ -56,157 +56,154 @@ export default function Suggestions() {
   }
 
   const riskColors = {
-    low: 'badge-green',
-    medium: 'badge-yellow',
-    high: 'badge-red'
+    low: 'badge-success',
+    medium: 'badge-warning',
+    high: 'badge-danger'
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-2">Daily Suggestions</h1>
-        <p className="text-slate-400">
+    <div className="page-container">
+      <div className="section-header mb-4">
+        <h1>Daily Suggestions</h1>
+        <p className="text-muted">
           AI-generated parlay suggestions based on current odds and trends.
         </p>
       </div>
 
       {/* Disclaimer */}
-      <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 mb-6">
-        <p className="text-sm text-yellow-200">
-          <strong>Research Only:</strong> These suggestions are for educational purposes.
-          Always do your own research. Past performance does not guarantee future results.
-        </p>
+      <div className="alert alert-warning mb-4">
+        <strong>Research Only:</strong> These suggestions are for educational purposes.
+        Always do your own research. Past performance does not guarantee future results.
       </div>
 
       {loading ? (
-        <div className="space-y-4">
+        <div className="grid gap-4">
           {[1, 2, 3].map(i => (
-            <div key={i} className="card animate-pulse">
-              <div className="h-6 bg-slate-700 rounded w-1/3 mb-4"></div>
-              <div className="h-20 bg-slate-700 rounded"></div>
+            <div key={i} className="card">
+              <div className="skeleton" style={{ height: '24px', width: '40%', marginBottom: '1rem' }}></div>
+              <div className="skeleton" style={{ height: '80px' }}></div>
             </div>
           ))}
         </div>
       ) : suggestions.length > 0 ? (
-        <div className="space-y-6">
+        <div className="grid gap-4">
           {suggestions.map(suggestion => (
-            <div key={suggestion.id} className="card">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="font-semibold text-lg">{suggestion.name}</h3>
-                  <p className="text-sm text-slate-400">{suggestion.description}</p>
+            <div key={suggestion.id} className="suggestion-card">
+              <div className="suggestion-card-header">
+                <div className="suggestion-card-title">
+                  <div>
+                    <div className="suggestion-card-name">{suggestion.name}</div>
+                    <div className="suggestion-card-desc">{suggestion.description}</div>
+                  </div>
+                  <span className={`badge ${riskColors[suggestion.riskLevel] || 'badge-warning'}`}>
+                    {suggestion.riskLevel} risk
+                  </span>
                 </div>
-                <span className={`badge ${riskColors[suggestion.riskLevel] || 'badge-yellow'}`}>
-                  {suggestion.riskLevel} risk
-                </span>
               </div>
 
-              {/* Legs */}
-              <div className="space-y-2 mb-4">
-                {suggestion.legs.map((leg, idx) => (
-                  <div
-                    key={idx}
-                    className="bg-dark-800 rounded-lg p-3 flex items-center justify-between"
-                  >
-                    <div>
-                      <div className="font-medium">{leg.team}</div>
-                      <div className="text-sm text-slate-400 capitalize">
-                        {leg.type}
-                        {leg.point && ` (${leg.point})`}
+              <div className="suggestion-card-body">
+                {/* Legs */}
+                <div className="parlay-slip-body" style={{ padding: 0, maxHeight: 'none' }}>
+                  {suggestion.legs.map((leg, idx) => (
+                    <div key={idx} className="parlay-leg">
+                      <div className="parlay-leg-info">
+                        <div className="parlay-leg-selection">{leg.team}</div>
+                        <div className="parlay-leg-detail">
+                          {leg.type}
+                          {leg.point && ` (${leg.point})`}
+                        </div>
                       </div>
+                      <span className={`parlay-leg-odds ${leg.price > 0 ? 'odds-positive' : 'odds-negative'}`}>
+                        {leg.price > 0 ? '+' : ''}{leg.price}
+                      </span>
                     </div>
-                    <span className={`font-medium ${leg.price > 0 ? 'text-primary' : ''}`}>
-                      {leg.price > 0 ? '+' : ''}{leg.price}
-                    </span>
+                  ))}
+                </div>
+
+                {/* AI Analysis */}
+                {(suggestion.analysis || suggestion.aiReasoning) && (
+                  <div className="card mt-4" style={{ background: 'var(--bg-base)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                      <svg style={{ width: '20px', height: '20px', color: 'var(--primary)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                      </svg>
+                      <span className="font-semibold">AI Analysis</span>
+                    </div>
+                    <p className="text-sm" style={{ color: 'var(--text-secondary)', whiteSpace: 'pre-wrap' }}>
+                      {suggestion.analysis || suggestion.aiReasoning}
+                    </p>
                   </div>
-                ))}
+                )}
+
+                {!suggestion.analysis && !suggestion.aiReasoning && (
+                  <button
+                    onClick={() => analyzeParlay(suggestion)}
+                    disabled={analyzing === suggestion.id}
+                    className="btn btn-secondary"
+                    style={{ width: '100%', marginTop: '1rem' }}
+                  >
+                    {analyzing === suggestion.id ? (
+                      <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                        <span className="spinner" style={{ width: '16px', height: '16px' }}></span>
+                        Analyzing...
+                      </span>
+                    ) : (
+                      'Get AI Analysis'
+                    )}
+                  </button>
+                )}
               </div>
 
               {/* Stats */}
-              <div className="flex items-center gap-6 text-sm mb-4">
+              <div className="suggestion-card-stats">
                 <div>
-                  <span className="text-slate-400">Legs: </span>
-                  <span className="font-medium">{suggestion.legs.length}</span>
+                  <span className="suggestion-stat-label">Legs:</span>
+                  <span className="suggestion-stat-value">{suggestion.legs.length}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400">Est. Odds: </span>
-                  <span className="font-medium text-primary">
+                  <span className="suggestion-stat-label">Est. Odds:</span>
+                  <span className="suggestion-stat-value" style={{ color: 'var(--primary)' }}>
                     +{Math.round((suggestion.estimatedOdds - 1) * 100)}
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-400">$10 Payout: </span>
-                  <span className="font-medium text-primary">
+                  <span className="suggestion-stat-label">$10 Payout:</span>
+                  <span className="suggestion-stat-value" style={{ color: 'var(--primary)' }}>
                     ${(10 * suggestion.estimatedOdds).toFixed(2)}
                   </span>
                 </div>
               </div>
-
-              {/* AI Analysis */}
-              {suggestion.analysis ? (
-                <div className="bg-dark-800 rounded-lg p-4 mt-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                    </svg>
-                    <span className="font-medium">AI Analysis</span>
-                  </div>
-                  <p className="text-sm text-slate-300 whitespace-pre-wrap">{suggestion.analysis}</p>
-                </div>
-              ) : suggestion.aiReasoning ? (
-                <div className="bg-dark-800 rounded-lg p-4 mt-4">
-                  <p className="text-sm text-slate-300">{suggestion.aiReasoning}</p>
-                </div>
-              ) : (
-                <button
-                  onClick={() => analyzeParlay(suggestion)}
-                  disabled={analyzing === suggestion.id}
-                  className="btn btn-secondary w-full mt-2"
-                >
-                  {analyzing === suggestion.id ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Analyzing...
-                    </span>
-                  ) : (
-                    'Get AI Analysis'
-                  )}
-                </button>
-              )}
             </div>
           ))}
         </div>
       ) : (
-        <div className="card text-center py-12">
-          <svg className="w-12 h-12 mx-auto text-slate-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="card text-center" style={{ padding: '3rem 1rem' }}>
+          <svg style={{ width: '48px', height: '48px', margin: '0 auto 1rem', color: 'var(--text-muted)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
-          <p className="text-slate-400">No suggestions available right now</p>
-          <p className="text-sm text-slate-500 mt-1">Check back later for new picks</p>
+          <p className="text-muted">No suggestions available right now</p>
+          <p className="text-xs text-muted mt-1">Check back later for new picks</p>
         </div>
       )}
 
       {/* Info Section */}
-      <div className="mt-8 card bg-dark-800/50">
-        <h3 className="font-semibold mb-3">How Suggestions Work</h3>
-        <ul className="text-sm text-slate-400 space-y-2">
-          <li className="flex items-start gap-2">
-            <span className="text-primary">1.</span>
-            We analyze current odds from DraftKings
+      <div className="card" style={{ marginTop: '2rem' }}>
+        <h3 style={{ fontWeight: 600, marginBottom: '0.75rem' }}>How Suggestions Work</h3>
+        <ul style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <li style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+            <span style={{ color: 'var(--primary)' }}>1.</span>
+            We analyze current odds from The Odds API
           </li>
-          <li className="flex items-start gap-2">
-            <span className="text-primary">2.</span>
+          <li style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+            <span style={{ color: 'var(--primary)' }}>2.</span>
             AI considers team performance and trends
           </li>
-          <li className="flex items-start gap-2">
-            <span className="text-primary">3.</span>
+          <li style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+            <span style={{ color: 'var(--primary)' }}>3.</span>
             Suggestions are categorized by risk level
           </li>
-          <li className="flex items-start gap-2">
-            <span className="text-primary">4.</span>
+          <li style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+            <span style={{ color: 'var(--primary)' }}>4.</span>
             Always verify odds before any decisions
           </li>
         </ul>
