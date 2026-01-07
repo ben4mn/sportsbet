@@ -24,6 +24,11 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Trust proxy for nginx reverse proxy (required for secure cookies)
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
 // Initialize database
 initDatabase();
 
