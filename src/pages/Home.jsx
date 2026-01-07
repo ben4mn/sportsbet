@@ -11,14 +11,14 @@ export default function Home() {
 
   async function fetchFeaturedGames() {
     try {
-      const sports = ['nfl', 'nba', 'mlb'];
+      const sports = ['nba', 'nhl'];
       const allGames = [];
 
       for (const sport of sports) {
         const res = await fetch(`/api/odds/${sport}`);
         if (res.ok) {
           const data = await res.json();
-          allGames.push(...(data.games || []).slice(0, 2));
+          allGames.push(...(data.games || []).slice(0, 3));
         }
       }
 
@@ -112,7 +112,7 @@ export default function Home() {
               </svg>
             </div>
             <h3>Live Odds</h3>
-            <p>Real-time odds from DraftKings for NFL, NBA, and MLB games.</p>
+            <p>Real-time odds from DraftKings for NBA and NHL games.</p>
           </div>
         </div>
       </section>

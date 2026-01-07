@@ -32,6 +32,7 @@ export default function Header() {
             )}
           </NavLink>
           <NavLink to="/suggestions">Suggestions</NavLink>
+          <NavLink to="/research">Research</NavLink>
         </nav>
 
         <div className="header-actions">

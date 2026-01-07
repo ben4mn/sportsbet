@@ -3,13 +3,12 @@ import { useParlay } from '../context/ParlayContext';
 import { useAuth } from '../context/AuthContext';
 
 const SPORTS = [
-  { id: 'nfl', name: 'NFL', icon: '🏈' },
   { id: 'nba', name: 'NBA', icon: '🏀' },
-  { id: 'mlb', name: 'MLB', icon: '⚾' }
+  { id: 'nhl', name: 'NHL', icon: '🏒' }
 ];
 
 export default function Builder() {
-  const [activeSport, setActiveSport] = useState('nfl');
+  const [activeSport, setActiveSport] = useState('nba');
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showSlip, setShowSlip] = useState(false);

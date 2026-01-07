@@ -13,6 +13,7 @@ import authRoutes from './server/routes/auth.js';
 import oddsRoutes from './server/routes/odds.js';
 import parlaysRoutes from './server/routes/parlays.js';
 import suggestionsRoutes from './server/routes/suggestions.js';
+import statsRoutes from './server/routes/stats.js';
 
 // Import database initialization
 import { initDatabase } from './server/db/database.js';
@@ -41,6 +42,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/odds', oddsRoutes);
 app.use('/api/parlays', parlaysRoutes);
 app.use('/api/suggestions', suggestionsRoutes);
+app.use('/api/stats', statsRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

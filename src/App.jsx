@@ -5,6 +5,7 @@ import Layout from './components/Layout/Layout';
 import Home from './pages/Home';
 import Builder from './pages/Builder';
 import Suggestions from './pages/Suggestions';
+import Research from './pages/Research';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -24,6 +25,7 @@ function App() {
               <Route index element={<Home />} />
               <Route path="builder" element={<Builder />} />
               <Route path="suggestions" element={<Suggestions />} />
+              <Route path="research" element={<Research />} />
               <Route path="settings" element={
                 <ProtectedRoute>
                   <Settings />
