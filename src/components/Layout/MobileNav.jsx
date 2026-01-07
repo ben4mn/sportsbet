@@ -20,7 +20,7 @@ export default function MobileNav() {
 
         <NavLink to="/suggestions" className={({ isActive }) => `mobile-nav-item ${isActive ? 'active' : ''}`}>
           <PicksIcon />
-          <span>Picks</span>
+          <span>AI Picks</span>
         </NavLink>
 
         <NavLink to="/research" className={({ isActive }) => `mobile-nav-item ${isActive ? 'active' : ''}`}>

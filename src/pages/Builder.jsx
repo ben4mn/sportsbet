@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParlay } from '../context/ParlayContext';
 import { useAuth } from '../context/AuthContext';
+import RateLimitModal from '../components/RateLimitModal';
 
 const SPORTS = [
   { id: 'nba', name: 'NBA', icon: '🏀' },
@@ -14,6 +15,7 @@ export default function Builder() {
   const [showSlip, setShowSlip] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
+  const [rateLimitError, setRateLimitError] = useState(null);
 
   const { legs, stake, setStake, addLeg, removeLeg, clearParlay, calculateOdds, isValid } = useParlay();
   const { user } = useAuth();
@@ -26,6 +28,13 @@ export default function Builder() {
     setLoading(true);
     try {
       const res = await fetch(`/api/odds/${sport}`);
+
+      if (res.status === 429) {
+        const data = await res.json();
+        setRateLimitError({ retryAfter: data.retryAfter || 60 });
+        return;
+      }
+
       if (res.ok) {
         const data = await res.json();
         setGames(data.games || []);
@@ -195,6 +204,12 @@ export default function Builder() {
           </div>
         </div>
       )}
+
+      <RateLimitModal
+        isOpen={!!rateLimitError}
+        onClose={() => setRateLimitError(null)}
+        retryAfter={rateLimitError?.retryAfter}
+      />
     </div>
   );
 }

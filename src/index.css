@@ -298,6 +298,11 @@ a:hover { color: var(--primary-hover); }
   color: var(--text-secondary);
 }
 
+.badge-purple {
+  background: rgba(139, 92, 246, 0.2);
+  color: rgb(167, 139, 250);
+}
+
 /* ===== Header Component ===== */
 .header {
   position: sticky;
@@ -757,6 +762,66 @@ a:hover { color: var(--primary-hover); }
   border-top: 1px solid var(--border-color);
 }
 
+/* Rate Limit Modal */
+.modal-icon {
+  font-size: 3rem;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.modal-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 0.75rem;
+}
+
+.modal-text {
+  color: var(--text-secondary);
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.modal-subtext {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.modal-info {
+  background: var(--bg-base);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.modal-info p {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.modal-info ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.modal-info li {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  padding: 0.25rem 0;
+  padding-left: 1rem;
+  position: relative;
+}
+
+.modal-info li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: var(--primary);
+}
+
 /* ===== Bottom Sheet (Mobile) ===== */
 .bottom-sheet {
   position: fixed;
@@ -800,6 +865,12 @@ a:hover { color: var(--primary-hover); }
   background: rgba(245, 158, 11, 0.1);
   border: 1px solid rgba(245, 158, 11, 0.2);
   color: #fbbf24;
+}
+
+.alert-info {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
 }
 
 .alert-danger {

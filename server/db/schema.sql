@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS preferences (
   bet_types TEXT DEFAULT '["moneyline", "spread", "totals"]',
   risk_tolerance TEXT DEFAULT 'moderate',
   bankroll REAL DEFAULT 0,
+  team_focus TEXT DEFAULT '[]',
+  avoid_teams TEXT DEFAULT '[]',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );

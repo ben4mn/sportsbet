@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import RateLimitModal from '../components/RateLimitModal';
 
 export default function Suggestions() {
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(null);
+  const [rateLimitError, setRateLimitError] = useState(null);
 
   const { user } = useAuth();
 
@@ -17,6 +20,13 @@ export default function Suggestions() {
       const res = await fetch('/api/suggestions/daily', {
         credentials: 'include'
       });
+
+      if (res.status === 429) {
+        const data = await res.json();
+        setRateLimitError({ retryAfter: data.retryAfter || 60 });
+        return;
+      }
+
       if (res.ok) {
         const data = await res.json();
         setSuggestions(data.suggestions || []);
@@ -37,6 +47,12 @@ export default function Suggestions() {
         credentials: 'include',
         body: JSON.stringify({ legs: suggestion.legs })
       });
+
+      if (res.status === 429) {
+        const data = await res.json();
+        setRateLimitError({ retryAfter: data.retryAfter || 60 });
+        return;
+      }
 
       if (res.ok) {
         const data = await res.json();
@@ -61,6 +77,27 @@ export default function Suggestions() {
     high: 'badge-danger'
   };
 
+  function formatLegType(type) {
+    // Format player prop types nicely
+    if (type?.startsWith('player_')) {
+      const propType = type.replace('player_', '').replace(/_/g, ' ');
+      return propType.charAt(0).toUpperCase() + propType.slice(1);
+    }
+    // Format standard types
+    const typeMap = {
+      'h2h': 'Moneyline',
+      'moneyline': 'Moneyline',
+      'spreads': 'Spread',
+      'spread': 'Spread',
+      'totals': 'Total'
+    };
+    return typeMap[type] || type;
+  }
+
+  function isPlayerProp(type) {
+    return type?.startsWith('player_');
+  }
+
   return (
     <div className="page-container">
       <div className="section-header mb-4">
@@ -68,6 +105,13 @@ export default function Suggestions() {
         <p className="text-muted">
           AI-generated parlay suggestions based on current odds and trends.
         </p>
+      </div>
+
+      {/* Tip */}
+      <div className="alert alert-info mb-4">
+        <strong>Tip:</strong> Set your favorite teams and preferences in{' '}
+        <Link to="/settings" style={{ color: 'var(--primary)' }}>Settings</Link>
+        {' '}to get personalized AI recommendations.
       </div>
 
       {/* Disclaimer */}
@@ -107,9 +151,16 @@ export default function Suggestions() {
                   {suggestion.legs.map((leg, idx) => (
                     <div key={idx} className="parlay-leg">
                       <div className="parlay-leg-info">
-                        <div className="parlay-leg-selection">{leg.team}</div>
+                        <div className="parlay-leg-selection">
+                          {leg.team}
+                          {isPlayerProp(leg.type) && (
+                            <span className="badge badge-purple" style={{ marginLeft: '0.5rem', fontSize: '0.65rem' }}>
+                              PROP
+                            </span>
+                          )}
+                        </div>
                         <div className="parlay-leg-detail">
-                          {leg.type}
+                          {formatLegType(leg.type)}
                           {leg.point && ` (${leg.point})`}
                         </div>
                       </div>
@@ -208,6 +259,12 @@ export default function Suggestions() {
           </li>
         </ul>
       </div>
+
+      <RateLimitModal
+        isOpen={!!rateLimitError}
+        onClose={() => setRateLimitError(null)}
+        retryAfter={rateLimitError?.retryAfter}
+      />
     </div>
   );
 }

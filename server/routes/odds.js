@@ -25,6 +25,13 @@ router.get('/:sport', optionalAuth, async (req, res) => {
     res.json(data);
   } catch (error) {
     console.error('Odds fetch error:', error);
+    if (error.code === 'RATE_LIMIT') {
+      return res.status(429).json({
+        error: 'rate_limit',
+        message: 'API quota exceeded. Please try again later.',
+        retryAfter: error.retryAfter
+      });
+    }
     res.status(500).json({ error: 'Failed to fetch odds' });
   }
 });
@@ -45,6 +52,13 @@ router.get('/:sport/:gameId', optionalAuth, async (req, res) => {
     res.json(data);
   } catch (error) {
     console.error('Game odds fetch error:', error);
+    if (error.code === 'RATE_LIMIT') {
+      return res.status(429).json({
+        error: 'rate_limit',
+        message: 'API quota exceeded. Please try again later.',
+        retryAfter: error.retryAfter
+      });
+    }
     res.status(500).json({ error: 'Failed to fetch game odds' });
   }
 });

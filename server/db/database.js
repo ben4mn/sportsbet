@@ -30,8 +30,27 @@ export function initDatabase() {
 
   database.exec(schema);
 
+  // Run migrations for existing databases
+  runMigrations(database);
+
   console.log('Database initialized successfully');
   return database;
+}
+
+function runMigrations(database) {
+  // Check if team_focus column exists, add if not
+  const columns = database.prepare(`PRAGMA table_info(preferences)`).all();
+  const columnNames = columns.map(c => c.name);
+
+  if (!columnNames.includes('team_focus')) {
+    console.log('Running migration: adding team_focus column');
+    database.exec(`ALTER TABLE preferences ADD COLUMN team_focus TEXT DEFAULT '[]'`);
+  }
+
+  if (!columnNames.includes('avoid_teams')) {
+    console.log('Running migration: adding avoid_teams column');
+    database.exec(`ALTER TABLE preferences ADD COLUMN avoid_teams TEXT DEFAULT '[]'`);
+  }
 }
 
 export default { getDatabase, initDatabase };

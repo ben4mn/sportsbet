@@ -23,9 +23,21 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/" element={<Layout />}>
               <Route index element={<Home />} />
-              <Route path="builder" element={<Builder />} />
-              <Route path="suggestions" element={<Suggestions />} />
-              <Route path="research" element={<Research />} />
+              <Route path="builder" element={
+                <ProtectedRoute>
+                  <Builder />
+                </ProtectedRoute>
+              } />
+              <Route path="suggestions" element={
+                <ProtectedRoute>
+                  <Suggestions />
+                </ProtectedRoute>
+              } />
+              <Route path="research" element={
+                <ProtectedRoute>
+                  <Research />
+                </ProtectedRoute>
+              } />
               <Route path="settings" element={
                 <ProtectedRoute>
                   <Settings />

@@ -129,7 +129,9 @@ router.get('/me', authenticateToken, (req, res) => {
         favoriteTeams: JSON.parse(preferences.favorite_teams || '[]'),
         betTypes: JSON.parse(preferences.bet_types || '[]'),
         riskTolerance: preferences.risk_tolerance,
-        bankroll: preferences.bankroll
+        bankroll: preferences.bankroll,
+        teamFocus: JSON.parse(preferences.team_focus || '[]'),
+        avoidTeams: JSON.parse(preferences.avoid_teams || '[]')
       } : null
     }
   });
@@ -138,7 +140,7 @@ router.get('/me', authenticateToken, (req, res) => {
 // Update preferences
 router.put('/preferences', authenticateToken, (req, res) => {
   try {
-    const { favoriteTeams, betTypes, riskTolerance, bankroll } = req.body;
+    const { favoriteTeams, betTypes, riskTolerance, bankroll, teamFocus, avoidTeams } = req.body;
     const db = getDatabase();
 
     db.prepare(`
@@ -147,6 +149,8 @@ router.put('/preferences', authenticateToken, (req, res) => {
         bet_types = ?,
         risk_tolerance = ?,
         bankroll = ?,
+        team_focus = ?,
+        avoid_teams = ?,
         updated_at = CURRENT_TIMESTAMP
       WHERE user_id = ?
     `).run(
@@ -154,6 +158,8 @@ router.put('/preferences', authenticateToken, (req, res) => {
       JSON.stringify(betTypes || []),
       riskTolerance || 'moderate',
       bankroll || 0,
+      JSON.stringify(teamFocus || []),
+      JSON.stringify(avoidTeams || []),
       req.user.userId
     );
 

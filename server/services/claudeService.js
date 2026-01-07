@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { fetchOddsForSport } from './oddsService.js';
+import { fetchOddsForSport, fetchPlayerProps } from './oddsService.js';
 
 const anthropic = process.env.ANTHROPIC_API_KEY
   ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
@@ -33,8 +33,25 @@ export async function generateSuggestions(preferences) {
       return getDefaultSuggestions();
     }
 
-    // Build prompt with real game data
-    const prompt = buildRealSuggestionsPrompt(allGames, preferences);
+    // Fetch player props if enabled (limit to 3 games to minimize API calls)
+    let playerProps = [];
+    const propsEnabled = preferences?.betTypes?.includes('props');
+
+    if (propsEnabled && allGames.length > 0) {
+      console.log('Fetching player props for top games...');
+      const propsPromises = allGames.slice(0, 3).map(game =>
+        fetchPlayerProps(game.sport.toLowerCase(), game.id)
+          .catch(err => {
+            console.log(`Failed to fetch props for ${game.id}:`, err.message);
+            return null;
+          })
+      );
+      const propsResults = await Promise.all(propsPromises);
+      playerProps = propsResults.filter(p => p !== null);
+    }
+
+    // Build prompt with real game data and props
+    const prompt = buildRealSuggestionsPrompt(allGames, preferences, playerProps);
 
     const response = await anthropic.messages.create({
       model: 'claude-3-haiku-20240307',
@@ -60,7 +77,7 @@ export async function generateSuggestions(preferences) {
   }
 }
 
-function buildRealSuggestionsPrompt(games, preferences) {
+function buildRealSuggestionsPrompt(games, preferences, playerProps = []) {
   // Format games for the prompt
   let gamesText = '';
 
@@ -112,6 +129,48 @@ ${gamesText}
   }
   if (preferences?.riskTolerance) {
     prompt += `User's risk tolerance: ${preferences.riskTolerance}\n`;
+  }
+
+  // Add team focus instructions
+  if (preferences?.teamFocus?.length) {
+    prompt += `\nUSER'S TEAM FOCUS (prioritize these teams):\n`;
+    preferences.teamFocus.forEach(tf => {
+      prompt += `- ${tf.team}: Risk level "${tf.risk}"`;
+      if (tf.alwaysInclude) {
+        prompt += ` - MUST include this team in at least one suggestion if games available`;
+      }
+      prompt += `\n`;
+    });
+  }
+
+  // Add teams to avoid
+  if (preferences?.avoidTeams?.length) {
+    prompt += `\nTEAMS TO AVOID (do NOT include in any suggestion): ${preferences.avoidTeams.join(', ')}\n`;
+  }
+
+  // Add player props if available
+  if (playerProps.length > 0) {
+    prompt += `\nAVAILABLE PLAYER PROPS:\n`;
+    playerProps.forEach(propData => {
+      if (propData.props && propData.props.length > 0) {
+        prompt += `\nGame ID: ${propData.eventId}\n`;
+        // Group by player
+        const byPlayer = {};
+        propData.props.forEach(prop => {
+          if (!byPlayer[prop.player]) byPlayer[prop.player] = [];
+          byPlayer[prop.player].push(prop);
+        });
+
+        Object.entries(byPlayer).slice(0, 4).forEach(([player, props]) => {
+          prompt += `  ${player}:\n`;
+          props.slice(0, 4).forEach(prop => {
+            const marketName = prop.market.replace('player_', '').replace(/_/g, ' ');
+            prompt += `    - ${marketName} ${prop.type} ${prop.point} (${prop.price > 0 ? '+' : ''}${prop.price})\n`;
+          });
+        });
+      }
+    });
+    prompt += `\nYou may include player props in suggestions. For props, use the player name as "team" and the market type (e.g., "player_points") as "type".\n`;
   }
 
   prompt += `

@@ -19,7 +19,9 @@ router.get('/daily', optionalAuth, async (req, res) => {
         preferences = {
           favoriteTeams: JSON.parse(prefs.favorite_teams || '[]'),
           betTypes: JSON.parse(prefs.bet_types || '[]'),
-          riskTolerance: prefs.risk_tolerance
+          riskTolerance: prefs.risk_tolerance,
+          teamFocus: JSON.parse(prefs.team_focus || '[]'),
+          avoidTeams: JSON.parse(prefs.avoid_teams || '[]')
         };
       }
     }
@@ -34,6 +36,13 @@ router.get('/daily', optionalAuth, async (req, res) => {
     });
   } catch (error) {
     console.error('Daily suggestions error:', error);
+    if (error.code === 'RATE_LIMIT') {
+      return res.status(429).json({
+        error: 'rate_limit',
+        message: 'API quota exceeded. Please try again later.',
+        retryAfter: error.retryAfter
+      });
+    }
     res.status(500).json({ error: 'Failed to generate suggestions' });
   }
 });

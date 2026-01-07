@@ -36,6 +36,13 @@ const RISK_LEVELS = [
   { id: 'aggressive', name: 'Aggressive', description: '5+ legs with higher odds' }
 ];
 
+const FOCUS_RISK_LEVELS = [
+  { id: 'conservative', name: 'Conservative' },
+  { id: 'normal', name: 'Normal' },
+  { id: 'aggressive', name: 'Aggressive' },
+  { id: 'yolo', name: 'YOLO' }
+];
+
 export default function Settings() {
   const { user, updatePreferences } = useAuth();
 
@@ -43,6 +50,8 @@ export default function Settings() {
   const [betTypes, setBetTypes] = useState(['moneyline', 'spread', 'totals']);
   const [riskTolerance, setRiskTolerance] = useState('moderate');
   const [bankroll, setBankroll] = useState(0);
+  const [teamFocus, setTeamFocus] = useState([]);
+  const [avoidTeams, setAvoidTeams] = useState([]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [activeTab, setActiveTab] = useState('nba');
@@ -53,6 +62,8 @@ export default function Settings() {
       setBetTypes(user.preferences.betTypes || ['moneyline', 'spread', 'totals']);
       setRiskTolerance(user.preferences.riskTolerance || 'moderate');
       setBankroll(user.preferences.bankroll || 0);
+      setTeamFocus(user.preferences.teamFocus || []);
+      setAvoidTeams(user.preferences.avoidTeams || []);
     }
   }, [user]);
 
@@ -65,7 +76,9 @@ export default function Settings() {
         favoriteTeams,
         betTypes,
         riskTolerance,
-        bankroll
+        bankroll,
+        teamFocus,
+        avoidTeams
       });
       setMessage('Preferences saved!');
       setTimeout(() => setMessage(''), 3000);
@@ -92,44 +105,74 @@ export default function Settings() {
     );
   }
 
+  function addTeamFocus(team) {
+    if (!teamFocus.find(tf => tf.team === team)) {
+      setTeamFocus(prev => [...prev, { team, risk: 'normal', alwaysInclude: false }]);
+    }
+  }
+
+  function removeTeamFocus(team) {
+    setTeamFocus(prev => prev.filter(tf => tf.team !== team));
+  }
+
+  function updateTeamFocusRisk(team, risk) {
+    setTeamFocus(prev => prev.map(tf =>
+      tf.team === team ? { ...tf, risk } : tf
+    ));
+  }
+
+  function toggleTeamFocusAlwaysInclude(team) {
+    setTeamFocus(prev => prev.map(tf =>
+      tf.team === team ? { ...tf, alwaysInclude: !tf.alwaysInclude } : tf
+    ));
+  }
+
+  function toggleAvoidTeam(team) {
+    setAvoidTeams(prev =>
+      prev.includes(team)
+        ? prev.filter(t => t !== team)
+        : [...prev, team]
+    );
+  }
+
   const teamsByTab = {
     nba: NBA_TEAMS,
     nhl: NHL_TEAMS
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
-      <h1 className="text-2xl font-bold mb-6">Settings</h1>
+    <div className="page-container" style={{ maxWidth: '42rem' }}>
+      <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem' }}>Settings</h1>
 
       {/* Account Info */}
-      <section className="card mb-6">
-        <h2 className="font-semibold mb-4">Account</h2>
-        <div className="text-slate-400">
-          <p>Email: <span className="text-white">{user?.email}</span></p>
-          <p className="text-sm mt-1">
+      <section className="card" style={{ marginBottom: '1.5rem' }}>
+        <h2 style={{ fontWeight: '600', marginBottom: '1rem' }}>Account</h2>
+        <div style={{ color: 'var(--text-secondary)' }}>
+          <p>Email: <span style={{ color: 'var(--text-primary)' }}>{user?.email}</span></p>
+          <p style={{ fontSize: '0.875rem', marginTop: '0.25rem' }}>
             Member since {new Date(user?.created_at).toLocaleDateString()}
           </p>
         </div>
       </section>
 
       {/* Favorite Teams */}
-      <section className="card mb-6">
-        <h2 className="font-semibold mb-4">Favorite Teams</h2>
-        <p className="text-sm text-slate-400 mb-4">
+      <section className="card" style={{ marginBottom: '1.5rem' }}>
+        <h2 style={{ fontWeight: '600', marginBottom: '1rem' }}>Favorite Teams</h2>
+        <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
           Select your favorite teams for personalized suggestions
         </p>
 
         {/* Sport Tabs */}
-        <div className="flex gap-2 mb-4">
+        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
           {['nba', 'nhl'].map(sport => (
             <button
               key={sport}
               onClick={() => setActiveTab(sport)}
-              className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
-                activeTab === sport
-                  ? 'bg-primary text-white'
-                  : 'bg-dark-800 text-slate-400 hover:text-white'
-              }`}
+              className="btn btn-sm"
+              style={{
+                background: activeTab === sport ? 'var(--primary)' : 'var(--bg-elevated)',
+                color: activeTab === sport ? 'white' : 'var(--text-secondary)'
+              }}
             >
               {sport.toUpperCase()}
             </button>
@@ -137,16 +180,20 @@ export default function Settings() {
         </div>
 
         {/* Teams Grid */}
-        <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', maxHeight: '15rem', overflowY: 'auto' }}>
           {teamsByTab[activeTab].map(team => (
             <button
               key={team}
               onClick={() => toggleTeam(team)}
-              className={`p-2 rounded text-sm text-left transition-colors ${
-                favoriteTeams.includes(team)
-                  ? 'bg-primary/20 text-primary border border-primary/30'
-                  : 'bg-dark-800 hover:bg-dark-700'
-              }`}
+              style={{
+                padding: '0.5rem',
+                borderRadius: 'var(--radius-md)',
+                fontSize: '0.875rem',
+                textAlign: 'left',
+                background: favoriteTeams.includes(team) ? 'rgba(16, 185, 129, 0.2)' : 'var(--bg-elevated)',
+                color: favoriteTeams.includes(team) ? 'var(--primary)' : 'var(--text-primary)',
+                border: favoriteTeams.includes(team) ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid transparent'
+              }}
             >
               {team}
             </button>
@@ -154,16 +201,159 @@ export default function Settings() {
         </div>
 
         {favoriteTeams.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-slate-700">
-            <p className="text-sm text-slate-400 mb-2">Selected ({favoriteTeams.length}):</p>
-            <div className="flex flex-wrap gap-2">
+          <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Selected ({favoriteTeams.length}):</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
               {favoriteTeams.map(team => (
                 <span
                   key={team}
-                  className="badge badge-green text-xs cursor-pointer hover:bg-red-500/20 hover:text-red-400"
+                  className="badge badge-success"
+                  style={{ fontSize: '0.75rem', cursor: 'pointer' }}
                   onClick={() => toggleTeam(team)}
                 >
-                  {team} &times;
+                  {team} ×
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* Team Focus */}
+      <section className="card" style={{ marginBottom: '1.5rem' }}>
+        <h2 style={{ fontWeight: '600', marginBottom: '1rem' }}>Team Focus (Optional)</h2>
+        <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+          Configure special focus for specific teams in suggestions
+        </p>
+
+        {/* Add Team Focus from favorites */}
+        {favoriteTeams.length > 0 && (
+          <div style={{ marginBottom: '1rem' }}>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Add from your favorites:</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+              {favoriteTeams
+                .filter(team => !teamFocus.find(tf => tf.team === team))
+                .map(team => (
+                  <button
+                    key={team}
+                    onClick={() => addTeamFocus(team)}
+                    className="badge"
+                    style={{ background: 'var(--bg-elevated)', fontSize: '0.75rem' }}
+                  >
+                    + {team}
+                  </button>
+                ))}
+            </div>
+          </div>
+        )}
+
+        {/* Team Focus List */}
+        {teamFocus.length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {teamFocus.map(tf => (
+              <div key={tf.team} style={{ padding: '0.75rem', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <span style={{ fontWeight: '500' }}>{tf.team}</span>
+                  <button
+                    onClick={() => removeTeamFocus(tf.team)}
+                    style={{ color: 'var(--danger)', fontSize: '0.875rem' }}
+                  >
+                    Remove
+                  </button>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Risk:</span>
+                  <div style={{ display: 'flex', gap: '0.25rem' }}>
+                    {FOCUS_RISK_LEVELS.map(level => (
+                      <button
+                        key={level.id}
+                        onClick={() => updateTeamFocusRisk(tf.team, level.id)}
+                        style={{
+                          padding: '0.25rem 0.5rem',
+                          fontSize: '0.75rem',
+                          borderRadius: 'var(--radius-sm)',
+                          background: tf.risk === level.id ? 'var(--primary)' : 'var(--bg-surface)',
+                          color: tf.risk === level.id ? 'white' : 'var(--text-secondary)'
+                        }}
+                      >
+                        {level.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={tf.alwaysInclude}
+                    onChange={() => toggleTeamFocusAlwaysInclude(tf.team)}
+                  />
+                  <span style={{ color: 'var(--text-secondary)' }}>Always include when available</span>
+                </label>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', textAlign: 'center', padding: '1rem 0' }}>
+            No team focus set. Add from your favorites above.
+          </p>
+        )}
+      </section>
+
+      {/* Teams to Avoid */}
+      <section className="card" style={{ marginBottom: '1.5rem' }}>
+        <h2 style={{ fontWeight: '600', marginBottom: '1rem' }}>Teams to Avoid (Optional)</h2>
+        <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+          Exclude these teams from suggestions
+        </p>
+
+        {/* Add Teams to Avoid */}
+        <div style={{ marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
+            {['nba', 'nhl'].map(sport => (
+              <button
+                key={sport}
+                onClick={() => setActiveTab(sport)}
+                style={{
+                  padding: '0.25rem 0.5rem',
+                  borderRadius: 'var(--radius-sm)',
+                  fontSize: '0.75rem',
+                  fontWeight: '500',
+                  background: activeTab === sport ? 'var(--primary)' : 'var(--bg-elevated)',
+                  color: activeTab === sport ? 'white' : 'var(--text-secondary)'
+                }}
+              >
+                {sport.toUpperCase()}
+              </button>
+            ))}
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', maxHeight: '8rem', overflowY: 'auto' }}>
+            {teamsByTab[activeTab]
+              .filter(team => !avoidTeams.includes(team))
+              .map(team => (
+                <button
+                  key={team}
+                  onClick={() => toggleAvoidTeam(team)}
+                  className="badge"
+                  style={{ background: 'var(--bg-elevated)', fontSize: '0.75rem' }}
+                >
+                  + {team}
+                </button>
+              ))}
+          </div>
+        </div>
+
+        {avoidTeams.length > 0 && (
+          <div style={{ paddingTop: '0.75rem', borderTop: '1px solid var(--border-color)' }}>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Avoiding ({avoidTeams.length}):</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+              {avoidTeams.map(team => (
+                <span
+                  key={team}
+                  className="badge badge-danger"
+                  style={{ fontSize: '0.75rem', cursor: 'pointer' }}
+                  onClick={() => toggleAvoidTeam(team)}
+                >
+                  {team} ×
                 </span>
               ))}
             </div>
@@ -172,61 +362,68 @@ export default function Settings() {
       </section>
 
       {/* Bet Types */}
-      <section className="card mb-6">
-        <h2 className="font-semibold mb-4">Preferred Bet Types</h2>
-        <div className="space-y-2">
+      <section className="card" style={{ marginBottom: '1.5rem' }}>
+        <h2 style={{ fontWeight: '600', marginBottom: '1rem' }}>Preferred Bet Types</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           {BET_TYPES.map(type => (
             <button
               key={type.id}
               onClick={() => toggleBetType(type.id)}
-              className={`w-full p-3 rounded-lg text-left transition-colors ${
-                betTypes.includes(type.id)
-                  ? 'bg-primary/20 border border-primary/30'
-                  : 'bg-dark-800 hover:bg-dark-700'
-              }`}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                borderRadius: 'var(--radius-md)',
+                textAlign: 'left',
+                background: betTypes.includes(type.id) ? 'rgba(16, 185, 129, 0.2)' : 'var(--bg-elevated)',
+                border: betTypes.includes(type.id) ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid transparent'
+              }}
             >
-              <div className="font-medium">{type.name}</div>
-              <div className="text-sm text-slate-400">{type.description}</div>
+              <div style={{ fontWeight: '500' }}>{type.name}</div>
+              <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{type.description}</div>
             </button>
           ))}
         </div>
       </section>
 
       {/* Risk Tolerance */}
-      <section className="card mb-6">
-        <h2 className="font-semibold mb-4">Risk Tolerance</h2>
-        <div className="space-y-2">
+      <section className="card" style={{ marginBottom: '1.5rem' }}>
+        <h2 style={{ fontWeight: '600', marginBottom: '1rem' }}>Risk Tolerance</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           {RISK_LEVELS.map(level => (
             <button
               key={level.id}
               onClick={() => setRiskTolerance(level.id)}
-              className={`w-full p-3 rounded-lg text-left transition-colors ${
-                riskTolerance === level.id
-                  ? 'bg-primary/20 border border-primary/30'
-                  : 'bg-dark-800 hover:bg-dark-700'
-              }`}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                borderRadius: 'var(--radius-md)',
+                textAlign: 'left',
+                background: riskTolerance === level.id ? 'rgba(16, 185, 129, 0.2)' : 'var(--bg-elevated)',
+                border: riskTolerance === level.id ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid transparent'
+              }}
             >
-              <div className="font-medium">{level.name}</div>
-              <div className="text-sm text-slate-400">{level.description}</div>
+              <div style={{ fontWeight: '500' }}>{level.name}</div>
+              <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{level.description}</div>
             </button>
           ))}
         </div>
       </section>
 
       {/* Bankroll (Optional) */}
-      <section className="card mb-6">
-        <h2 className="font-semibold mb-4">Bankroll Tracking (Optional)</h2>
-        <p className="text-sm text-slate-400 mb-4">
+      <section className="card" style={{ marginBottom: '1.5rem' }}>
+        <h2 style={{ fontWeight: '600', marginBottom: '1rem' }}>Bankroll Tracking (Optional)</h2>
+        <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
           Set a reference bankroll for percentage-based stake suggestions
         </p>
-        <div className="flex items-center gap-2">
-          <span className="text-slate-400">$</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span style={{ color: 'var(--text-secondary)' }}>$</span>
           <input
             type="number"
             min="0"
             value={bankroll}
             onChange={(e) => setBankroll(Number(e.target.value) || 0)}
-            className="flex-1"
+            className="form-input"
+            style={{ flex: 1 }}
             placeholder="0"
           />
         </div>
@@ -234,9 +431,14 @@ export default function Settings() {
 
       {/* Save Button */}
       {message && (
-        <div className={`mb-4 p-3 rounded-lg text-center ${
-          message.includes('Failed') ? 'bg-red-500/10 text-red-400' : 'bg-primary/10 text-primary'
-        }`}>
+        <div style={{
+          marginBottom: '1rem',
+          padding: '0.75rem',
+          borderRadius: 'var(--radius-md)',
+          textAlign: 'center',
+          background: message.includes('Failed') ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+          color: message.includes('Failed') ? 'var(--danger)' : 'var(--primary)'
+        }}>
           {message}
         </div>
       )}
@@ -244,7 +446,8 @@ export default function Settings() {
       <button
         onClick={handleSave}
         disabled={saving}
-        className="btn btn-primary w-full"
+        className="btn btn-primary"
+        style={{ width: '100%' }}
       >
         {saving ? 'Saving...' : 'Save Preferences'}
       </button>
