@@ -69,6 +69,7 @@ export default function Register() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               required
+              className="form-input"
             />
           </div>
 
@@ -83,6 +84,7 @@ export default function Register() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="At least 8 characters"
               required
+              className="form-input"
             />
           </div>
 
@@ -97,6 +99,7 @@ export default function Register() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Confirm your password"
               required
+              className="form-input"
             />
           </div>
 

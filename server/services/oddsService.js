@@ -30,7 +30,7 @@ export async function fetchOddsForSport(sport) {
   const bookmakers = 'draftkings';
 
   const response = await fetch(
-    `${ODDS_API_BASE}/sports/${sportKey}/odds/?apiKey=${ODDS_API_KEY}&regions=us&markets=${markets}&bookmakers=${bookmakers}`
+    `${ODDS_API_BASE}/sports/${sportKey}/odds/?apiKey=${ODDS_API_KEY}&regions=us&markets=${markets}&bookmakers=${bookmakers}&oddsFormat=american`
   );
 
   if (!response.ok) {
